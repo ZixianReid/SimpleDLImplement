@@ -30,13 +30,13 @@ train in main.py
 network in pointplus_cls.py \
 train in main.py
 
-### Fast-RCNN for object detection
+### Faster-RCNN for object detection
 still deveoloping
 
 
 ### Todo
 
-- [ ] Fast-RCNN implementation
+- [ ] Faster-RCNN implementation
 - [ ] Pointpillar  implementation
 - [ ] YOLO5 implementation
 
