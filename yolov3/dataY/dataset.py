@@ -45,7 +45,7 @@ def preprocess(img, min_size=600, max_size=1000):
     scale2 = max_size / max(H, W)
     scale = min(scale1, scale2)
     img = img / 255.
-    img = sktsf.resize(img, (C, H * scale, W * scale), mode='reflect', anti_aliasing=False)
+    img = sktsf.resize(img, (C, 416, 416), mode='reflect', anti_aliasing=False)
     # both the longer and shorter should be less than
     # max_size and min_size
     normalize = pytorch_normalze
@@ -192,7 +192,6 @@ class Transform(object):
         _, H, W = img.shape
         img = preprocess(img, self.min_size, self.max_size)
         _, o_H, o_W = img.shape
-        scale = o_H / H
         bbox = resize_bbox(bbox, (H, W), (o_H, o_W))
 
         # horizontally flip
@@ -201,7 +200,7 @@ class Transform(object):
         bbox = flip_bbox(
             bbox, (o_H, o_W), x_flip=params['x_flip'])
 
-        return img, bbox, label, scale
+        return img, bbox, label
 
 
 class VocTrainDataset(data.Dataset):
@@ -212,12 +211,20 @@ class VocTrainDataset(data.Dataset):
     def __getitem__(self, idx):
         ori_img, bbox, label, difficult = self.db.get_example(idx)
 
-        img, bbox, label, scale = self.tsf((ori_img, bbox, label))
-        # bbox = transferbbox(bbox)
+        img, bbox, label = self.tsf((ori_img, bbox, label))
+        bbox = transferbbox(bbox)
         # TODO: check whose stride is negative to fix this instead copy all
         # some of the strides of a given numpy array are negative.
-        return img.copy(), bbox.copy(), label.copy(), scale
+        return img.copy(), bbox.copy(), label.copy()
 
     def __len__(self):
         return len(self.db)
 
+def transferbbox(bbox):
+    bbox = bbox.copy()
+    output = torch.zeros(bbox.shape)
+    output[:, :, 0] = (bbox[:, :, 1] + bbox[:, :, 3]) / 2
+    output[:, :, 1] = (bbox[:, :, 0] + bbox[:, :, 2]) / 2
+    output[:, :, 2] = (bbox[:, :, 3] - bbox[:, :, 1])
+    output[:, :, 3] = (bbox[:, :, 2] - bbox[:, :, 0])
+    return output

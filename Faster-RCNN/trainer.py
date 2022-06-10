@@ -167,7 +167,6 @@ class FasterRCNNTrainer(nn.Module):
         return losses
 
 
-
 def _smooth_l1_loss(x, t, in_weight, sigma):
     sigma2 = sigma ** 2
     diff = in_weight * (x - t)
